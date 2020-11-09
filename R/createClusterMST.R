@@ -48,7 +48,7 @@
 #' see the \pkg{BiocNeighbors} package for more details.
 #'
 #' @section Introducing an outgroup:
-#' If \code{outgroup=TRUE}, we add an outgroup to avoid constructing a trajectory between \dQuote{unrelated} clusters.
+#' If \code{outgroup=TRUE}, we add an outgroup to avoid constructing a trajectory between \dQuote{unrelated} clusters (Street et al., 2018).
 #' This is done by adding an extra row/column to the distance matrix corresponding to an artificial outgroup cluster,
 #' where the distance to all of the other real clusters is set to \eqn{\omega/2}.
 #' Large jumps in the MST between real clusters that are more distant than \eqn{\omega} will then be rerouted through the outgroup,
@@ -107,6 +107,10 @@
 #' Ji Z and Ji H (2016).
 #' TSCAN: Pseudo-time reconstruction and evaluation in single-cell RNA-seq analysis.
 #' \emph{Nucleic Acids Res.} 44, e117
+#'
+#' Street K et al. (2018).
+#' Slingshot: cell lineage and pseudotime inference for single-cell transcriptomics. 
+#' \emph{BMC Genomics}, 477.
 #'
 #' @examples
 #' # Mocking up a Y-shaped trajectory.
