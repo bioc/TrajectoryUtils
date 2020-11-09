@@ -1,0 +1,32 @@
+Package: TrajectoryUtils
+Version: 0.98.0
+Date: 2020-11-08
+Description: 
+    Implements low-level utilities for single-cell trajectory analysis,
+    primarily intended for re-use inside higher-level packages.
+    Include a function to create a cluster-level minimum spanning tree
+    and data structures to hold pseudotime inference results.
+Authors@R: 
+    person("Aaron", "Lun", role=c("aut", "cre"), email="infinite.monkeys.with.keyboards@gmail.com")
+License: GPL-3
+biocViews: GeneExpression, SingleCell
+Depends:
+    SingleCellExperiment
+Imports:
+    methods,
+    stats,
+    Matrix,
+    igraph,
+    SummarizedExperiment,
+    DelayedArray,
+    S4Vectors
+Suggests:
+    BiocNeighbors,
+    batchelor,
+    BiocParallel,
+    testthat,
+    knitr,
+    BiocStyle,
+    rmarkdown
+VignetteBuilder: knitr
+RoxygenNote: 7.1.1
