@@ -38,6 +38,7 @@
 #' Only used if \code{outgroup=TRUE}.
 #' @param assay.type An integer or string specifying the assay to use from a SummarizedExperiment \code{x}.
 #' @param use.dimred An integer or string specifying the reduced dimensions to use from a SingleCellExperiment \code{x}.
+#' @param use.median A logical scalar indicating whether cluster centroid coordinates should be computed using the median rather than mean.
 #' @param with.mnn A logical scalar indicating whether to use distances computed from mutual nearest neighbor pairs, see Details.
 #' @param mnn.k An integer scalar specifying the number of nearest neighbors to consider for the MNN-based distance calculation. 
 #' See \code{\link[batchelor]{findMutualNN}} for more details.
@@ -73,7 +74,7 @@
 #' The normalized gain is reported as the \code{"gain"} attribute in the edges of the MST from \code{\link{createClusterMST}}.
 #' Note that the \code{"weight"} attribute represents the edge length.
 #'
-#' @section An alternative distance calculation:
+#' @section Alternative distances with MNN pairs:
 #' While distances between centroids are usually satisfactory for gauging cluster \dQuote{closeness}, 
 #' they do not consider the behavior at the boundaries of the clusters.
 #' Two clusters that are immediately adjacent (i.e., intermingling at the boundaries) may have a large distance between their centroids
@@ -89,6 +90,12 @@
 #' This mode can be enabled by setting \code{with.mnn=TRUE}, while the stringency of the MNN definition can be set with \code{mnn.k}.
 #' Similarly, the performance of the nearest neighbor search can be controlled with \code{BPPARAM} and \code{BSPARAM}.
 #' Note that this mode performs a cell-based search and so cannot be used when \code{x} already contains aggregated profiles.
+#'
+#' @section Using medians:
+#' If \code{use.median=TRUE}, the median across all cells in each cluster is used to compute the centroid coordinate for each dimension.
+#' This protects against outliers but is less stable than the mean.
+#' Enabling this option is advisable if one observes that the default centroid is not located near any of its points due to outliers.
+#' Note that the centroids computed in this manner is not a true medoid, which was too much of a pain to compute.
 #' 
 #' @return A \link{graph} object containing an MST computed on \code{centers}.
 #' Each node corresponds to a cluster centroid and has a numeric vector of coordinates in the \code{coordinates} attribute.
@@ -130,13 +137,14 @@ NULL
 
 #' @importFrom igraph graph.adjacency minimum.spanning.tree delete_vertices E V V<-
 #' @importFrom stats median dist
-.create_cluster_mst <- function(x, clusters, outgroup=FALSE, outscale=3, columns=NULL, with.mnn=FALSE, mnn.k=50, BNPARAM=NULL, BPPARAM=NULL) {
+.create_cluster_mst <- function(x, clusters, use.median=FALSE, outgroup=FALSE, outscale=3, columns=NULL, with.mnn=FALSE, mnn.k=50, BNPARAM=NULL, BPPARAM=NULL) {
     if (!is.null(columns)) {
         x <- x[,columns,drop=FALSE]                
     }
 
     if (!is.null(clusters)) {
-        centers <- rowmean(x, clusters)
+        FUN <- if (use.median) rowmedian else rowmean
+        centers <- FUN(x, clusters)
     } else if (is.null(rownames(x))) {
         stop("'x' must have row names corresponding to cluster names")
     } else {

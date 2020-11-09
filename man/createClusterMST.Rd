@@ -12,6 +12,7 @@ createClusterMST(x, ...)
 \S4method{createClusterMST}{ANY}(
   x,
   clusters,
+  use.median = FALSE,
   outgroup = FALSE,
   outscale = 3,
   columns = NULL,
@@ -57,6 +58,8 @@ For the SingleCellExperiment method, further arguments to pass to the Summarized
 \item{clusters}{A factor-like object of the same length as \code{nrow(x)},
 specifying the cluster identity for each cell in \code{x}.
 If \code{NULL}, \code{x} is assumed to already contain coordinates for the cluster centroids.}
+
+\item{use.median}{A logical scalar indicating whether cluster centroid coordinates should be computed using the median rather than mean.}
 
 \item{outgroup}{A logical scalar indicating whether an outgroup should be inserted to split unrelated trajectories.
 Alternatively, a numeric scalar specifying the distance threshold to use for this splitting.}
@@ -125,7 +128,7 @@ The normalized gain is reported as the \code{"gain"} attribute in the edges of t
 Note that the \code{"weight"} attribute represents the edge length.
 }
 
-\section{An alternative distance calculation}{
+\section{Alternative distances with MNN pairs}{
 
 While distances between centroids are usually satisfactory for gauging cluster \dQuote{closeness}, 
 they do not consider the behavior at the boundaries of the clusters.
@@ -142,6 +145,14 @@ In this manner, we focus on cluster pairs that are close at their boundaries rat
 This mode can be enabled by setting \code{with.mnn=TRUE}, while the stringency of the MNN definition can be set with \code{mnn.k}.
 Similarly, the performance of the nearest neighbor search can be controlled with \code{BPPARAM} and \code{BSPARAM}.
 Note that this mode performs a cell-based search and so cannot be used when \code{x} already contains aggregated profiles.
+}
+
+\section{Using medians}{
+
+If \code{use.median=TRUE}, the median across all cells in each cluster is used to compute the centroid coordinate for each dimension.
+This protects against outliers but is less stable than the mean.
+Enabling this option is advisable if one observes that the default centroid is not located near any of its points due to outliers.
+Note that the centroids computed in this manner is not a true medoid, which was too much of a pain to compute.
 }
 
 \examples{

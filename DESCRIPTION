@@ -17,9 +17,9 @@ Imports:
     stats,
     Matrix,
     igraph,
-    SummarizedExperiment,
-    DelayedArray,
-    S4Vectors
+    MatrixGenerics,
+    S4Vectors,
+    SummarizedExperiment
 Suggests:
     BiocNeighbors,
     batchelor,

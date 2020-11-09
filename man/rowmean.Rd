@@ -2,28 +2,33 @@
 % Please edit documentation in R/rowmean.R
 \name{rowmean}
 \alias{rowmean}
-\title{Compute column means of a matrix based on a grouping variable}
+\alias{rowmedian}
+\title{Compute column means based on a grouping variable}
 \usage{
 rowmean(x, group, ...)
+
+rowmedian(x, group, ...)
 }
 \arguments{
 \item{x}{A numeric matrix or matrix-like object.}
 
 \item{group}{A vector or factor specifying the group assignment for each row of \code{x}.}
 
-\item{...}{Further arguments to pass to \code{\link{rowsum}}, e.g., \code{reorder}.}
+\item{...}{Further arguments to pass to \code{\link{rowMeans}} or \code{\link{rowMedians}}.}
 }
 \value{
 A numeric matrix with one row per level of \code{group},
-where the value for each column contains the average value across the subset of rows corresponding that level.
+where the value for each column contains the mean or median across the subset of rows corresponding that level.
 }
 \description{
-A utility that is equivalent to \code{\link{rowsum}}, but computes the mean instead of the sum of each subset of rows.
+Computes the column mean or median for each group of rows in a matrix.
+Effectively the transposed counterpart to \code{\link{colsum}}.
 }
 \examples{
 x <- matrix(runif(100), ncol = 5)
 group <- sample(1:8, 20, TRUE)
 (xmean <- rowmean(x, group))
+(xmeds <- rowmedian(x, group))
 
 }
 \author{
