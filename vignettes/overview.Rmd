@@ -1,0 +1,110 @@
+---
+title: Trajectory utilities for package developers
+author: 
+- name: Aaron Lun
+  email: infinite.monkeys.with.keyboards@gmail.com
+date: "Revised: 8 November 2020"
+output:
+  BiocStyle::html_document:
+    toc_float: true
+package: TrajectoryUtils
+vignette: >
+  %\VignetteIndexEntry{Trajectory utilities}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}    
+---
+
+```{r, echo=FALSE, results="hide", message=FALSE}
+require(knitr)
+opts_chunk$set(error=FALSE, message=FALSE, warning=FALSE)
+library(BiocStyle)
+```
+
+# Overview
+
+The `r Biocpkg("TrajectoryUtils")` package contains low-level utilities to support trajectory inference packages.
+_Support_ is the key word here: this package does not perform any inference itself, deferring that to higher-level packages like `r Biocpkg("TSCAN")` and `r Biocpkg("slingshot")`.
+In fact, most of the code in this package was factored out of those two packages after we realized their commonalities.
+By rolling this out into a separate package, we can cut down on redundancy, facilitate better propagation of features and simplify maintenance.
+If you're a developer and you have a general utility for trajectory inference, contributions are welcome.
+
+# MST construction
+
+The construction of a cluster-based minium spanning tree is the primary motivator for this package, 
+as it was implemented separately in `r Biocpkg("TSCAN")` and `r Biocpkg("slingshot")`.
+The idea is simple - cluster cells and create a minimum spanning tree from the cluster centroids to serve as the backbone for the trajectory reconstruction.
+
+```{r}
+# Mocking up a Y-shaped trajectory.
+centers <- rbind(c(0,0), c(0, -1), c(1, 1), c(-1, 1))
+rownames(centers) <- seq_len(nrow(centers))
+clusters <- sample(nrow(centers), 1000, replace=TRUE)
+cells <- centers[clusters,]
+cells <- cells + rnorm(length(cells), sd=0.5)
+
+# Creating the MST:
+library(TrajectoryUtils)
+mst <- createClusterMST(cells, clusters)
+plot(mst)
+```
+
+The implementation in `createClusterMST()` combines several useful ideas from the two aforementioned packages:
+
+- With `outgroup=TRUE`, users can add an outgroup to break apart distant clusters.
+This ensures that the MST does not form spurious links between unrelated parts of the dataset.
+- With `with.mnn=TRUE`, users can create the MST based on the distances between mutually nearest neighbors.
+This avoids penalizing the formation of edges between adjacent heterogeneous clusters. 
+- With `use.median=TRUE`, the centroids are computed by taking the median instead of the mean.
+This protects against clusters with many outliers.
+
+# The `PseudotimeOrdering` class
+
+We can create a compact representation of pseudotime orderings in the form of a matrix where rows are cells and columns are paths through the trajectory.
+Each cell receives a pseudotime value along a path - or `NA`, if the cell does not lie on that path.
+On occasion, we may wish to annotate this with metadata on the cells or on the paths.
+This is supported by the `PseudotimeOrdering` class:
+
+```{r}
+# Make up a matrix of pseudotime orderings.
+ncells <- 200
+npaths <- 5
+orderings <- matrix(rnorm(1000), ncells, npaths)
+
+# Default constructor:
+(pto <- PseudotimeOrdering(orderings))
+```
+
+It is then straightforward to add metadata on the cells:
+
+```{r}
+pto$cluster <- sample(LETTERS[1:5], ncells, replace=TRUE)
+cellData(pto)
+```
+
+Or on the paths:
+
+```{r}
+pathData(pto)$description <- sprintf("PATH-%i", seq_len(npaths))
+pathData(pto)
+```
+
+Additional matrices can also be added if multiple statistics are available for each cell/path combination.
+For example, one might imagine assigning the confidence to which each cell is assigned to each path.
+
+```{r}
+pathStat(pto, "confidence") <- matrix(runif(1000), ncells, npaths)
+pathStatNames(pto)
+```
+
+For convenience, we also provide the `averagePseudotime()` function to compute the average pseudotime for each cell.
+This is sometimes necessary in applications that only expect a single set of pseudotime values, e.g., for visualization.
+
+```{r}
+summary(averagePseudotime(pto))
+```
+
+# Session information {-}
+
+```{r}
+sessionInfo()
+```
