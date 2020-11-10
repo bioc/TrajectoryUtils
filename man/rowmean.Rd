@@ -22,7 +22,12 @@ where the value for each column contains the mean or median across the subset of
 }
 \description{
 Computes the column mean or median for each group of rows in a matrix.
-Effectively the transposed counterpart to \code{\link{colsum}}.
+}
+\details{
+The naming scheme here is somewhat inspired by the \code{rowsum} function from the \pkg{DelayedArray} package,
+which is in turn a transposed counterpart to \code{\link{colsum}}.
+Admittedly, it is rather confusing when \code{\link{rowMeans}} computes the mean for a row across all columns
+while \code{rowmean} computes the mean for a column across a subset of rows, but there you have it.
 }
 \examples{
 x <- matrix(runif(100), ncol = 5)

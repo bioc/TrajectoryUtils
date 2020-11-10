@@ -1,11 +1,16 @@
 #' Compute column means based on a grouping variable
 #'
 #' Computes the column mean or median for each group of rows in a matrix.
-#' Effectively the transposed counterpart to \code{\link{colsum}}.
 #'
 #' @param x A numeric matrix or matrix-like object.
 #' @param group A vector or factor specifying the group assignment for each row of \code{x}.
 #' @param ... Further arguments to pass to \code{\link{rowMeans}} or \code{\link{rowMedians}}.
+#'
+#' @details
+#' The naming scheme here is somewhat inspired by the \code{rowsum} function from the \pkg{DelayedArray} package,
+#' which is in turn a transposed counterpart to \code{\link{colsum}}.
+#' Admittedly, it is rather confusing when \code{\link{rowMeans}} computes the mean for a row across all columns
+#' while \code{rowmean} computes the mean for a column across a subset of rows, but there you have it.
 #'
 #' @return A numeric matrix with one row per level of \code{group},
 #' where the value for each column contains the mean or median across the subset of rows corresponding that level.
