@@ -299,7 +299,7 @@ NULL
             }
 
             diff <- mu1 - mu2
-            d <- as.numeric(t(diff) %*% solve(s1 + s2) %*% diff)
+            d <- sqrt(as.numeric(t(diff) %*% solve(s1 + s2) %*% diff))
             output[i,j] <- output[j,i] <- d
         }
     }
