@@ -83,7 +83,7 @@
 #'
 #' We chose to do this reskinning to provide a clear conceptual break between the two classes.
 #' The PseudotimeOrdering's dimensions do not follow the SummarizedExperiment's conventional \dQuote{samples as columns} philosophy, as each row instead represents a cell/sample.
-#' Similarly, it is hard to argue that the rows are really interpretable as \dQuote{features} in any meaningful sense.
+#' Similarly, it is hard to argue that the paths are really interpretable as \dQuote{features} in any meaningful sense.
 #' By reskinning, we hide the SummarizedExperiment implementation from the end-user and avoid any confusion with the interpretation of PseudotimeOrdering's dimensions.
 #'
 #' Of course, we could just transpose the inputs to get them to fit into a SummarizedExperiment.
@@ -245,7 +245,7 @@ setGeneric("pathData<-", function(x, value) standardGeneric("pathData<-"))
 
 #' @export
 setReplaceMethod("pathData", "PseudotimeOrdering", function(x, value) {
-    rowData(x) <- value
+    colData(x) <- value
     x
 })
 
@@ -254,7 +254,7 @@ setGeneric("pathnames<-", function(x, value) standardGeneric("pathnames<-"))
 
 #' @export
 setReplaceMethod("pathnames", "PseudotimeOrdering", function(x, value) {
-    rownames(x) <- value
+    colnames(x) <- value
     x
 })
 
