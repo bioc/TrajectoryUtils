@@ -52,10 +52,41 @@ The implementation in `createClusterMST()` combines several useful ideas from th
 
 - With `outgroup=TRUE`, users can add an outgroup to break apart distant clusters.
 This ensures that the MST does not form spurious links between unrelated parts of the dataset.
-- With `with.mnn=TRUE`, users can create the MST based on the distances between mutually nearest neighbors.
+- With `dist.method="mnn"`, users can create the MST based on the distances between mutually nearest neighbors.
 This avoids penalizing the formation of edges between adjacent heterogeneous clusters. 
+- With `dist.method="slingshot"`, the Mahalanobis distance is computed from the covariance matrix for cells in each cluster.
+This accounts for the shape and spread of clusters when constructing the MST.
 - With `use.median=TRUE`, the centroids are computed by taking the median instead of the mean.
 This protects against clusters with many outliers.
+
+# Operations on the MST
+
+Once the MST is constructed, we can use the `guessMSTRoots()` function to guess the possible roots.
+One root is guessed for each component of the MST, though the choice of root depends on the `method` in use.
+For example, we can choose a root node that maximizes the steps/distance to all terminal (degree-1) nodes;
+this results in fewer branch events when defining paths through the MST.
+
+```{r}
+guessMSTRoots(mst, method="maxstep")
+guessMSTRoots(mst, method="minstep")
+```
+
+Once a root is guessed, we can define paths from the root to all terminal nodes using the `defineMSTPaths()` function.
+The interpretation of each path depends on the appropriateness of the chosen root;
+for example, in developmental contexts, each path can be treated as a lineage if the root corresponds to some undifferentiated state.
+
+```{r}
+defineMSTPaths(mst, roots=c("1"))
+defineMSTPaths(mst, roots=c("2"))
+```
+
+Alternatively, if timing information is available (e.g., from an experimental time-course, or from computational methods like RNA velocity),
+we can use that to define paths through the MST based on the assumed movement of cells from local minima to the nearest local maxima in time.
+In the mock example below, the branch point at cluster 1 has the highest time so all paths converge from the terminal nodes to cluster 1.
+
+```{r}
+defineMSTPaths(mst, times=c(`1`=4, `2`=0, `3`=1, `4`=0))
+```
 
 # The `PseudotimeOrdering` class
 
