@@ -85,5 +85,6 @@ guessMSTRoots <- function(g, method=c("degree1", "maxstep", "maxlen", "minstep",
         }
     }
 
-    unlist(roots)
+    # As character for the edge case of an empty list.
+    as.character(unlist(roots))
 }
