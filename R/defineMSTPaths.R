@@ -88,7 +88,7 @@ defineMSTPaths <- function(g, roots, times=NULL, cluster=NULL, use.median=FALSE)
                 collected[[s]] <- lapply(paths, names)
             }
 
-            output[[i]] <- collected
+            output[[i]] <- unlist(collected, recursive=FALSE)
         }
     }
 
