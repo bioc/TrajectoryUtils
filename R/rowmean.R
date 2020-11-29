@@ -31,9 +31,8 @@ rowmean <- function(x, group, ...) {
 
 #' @export
 #' @rdname rowmean
-#' @importFrom MatrixGenerics colMedians
 rowmedian <- function(x, group, ...) {
-    .rowstats(x, group, FUN=colMedians, ...)
+    .rowstats(DelayedArray::DelayedArray(x), group, FUN=DelayedMatrixStats::colMedians, ...)
 }
 
 .rowstats <- function(x, group, FUN, ...) {

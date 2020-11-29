@@ -17,11 +17,12 @@ Imports:
     stats,
     Matrix,
     igraph,
-    MatrixGenerics,
     S4Vectors,
     SummarizedExperiment
 Suggests:
     BiocNeighbors,
+    DelayedArray,
+    DelayedMatrixStats,
     batchelor,
     BiocParallel,
     testthat,
