@@ -78,13 +78,17 @@ defineMSTPaths <- function(g, roots, times=NULL, cluster=NULL, use.median=FALSE)
             mat <- mat * keep
             g2 <- graph_from_adjacency_matrix(mat, mode="directed")
 
-            all.nodes <- names(V(tree))
+            all.nodes <- names(V(g2))
             all.starts <- all.nodes[degree(g2, mode="in") == 0]
-            all.ends <- all.nodes[degree(g2, mode="out") == 0L]
+            all.ends <- all.nodes[degree(g2, mode="out") == 0]
 
             collected <- vector("list", length(all.starts))
             for (s in seq_along(collected)) {
-                paths <- shortest_paths(g2, from=all.starts[s], to=all.ends, output="vpath")$vpath
+                # If it's not a neighboring local maxima, it won't be reachable,
+                # because the directions of the edges won't allow it.
+                reachable <- subcomponent(g2, all.starts[s], mode="out")
+                cur.ends <- intersect(all.nodes[reachable], all.ends)
+                paths <- shortest_paths(g2, from=all.starts[s], to=cur.ends, output="vpath")$vpath
                 collected[[s]] <- lapply(paths, names)
             }
 

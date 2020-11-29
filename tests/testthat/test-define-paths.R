@@ -32,11 +32,20 @@ test_that("defineMSTPaths works with per-node times", {
 
     paths <- defineMSTPaths(g, times=c(A=0, B=5, C=2, D=10))
     expect_identical(paths, list(c("A", "B", "D"), c("C", "B", "D")))
+    
+    # Works for ties in adjacent nodes.
+    paths <- defineMSTPaths(g, times=c(A=0, B=0, C=2, D=10))
+    expect_identical(paths, list("A", c("B", "C"), c("B", "D")))
 
     # Works for multiple components.
     g2 <- make_graph(c("A", "B", "B", "C", "B", "D", "E", "F"), directed=FALSE)
     paths <- defineMSTPaths(g2, times=c(A=0, B=1, C=2, D=3, E=10, F=0))
     expect_identical(paths, list(c("A", "B", "C"), c("A", "B", "D"), c("F", "E")))
+
+    # Works for multiple components after adding timing directions.
+    g2 <- make_graph(c("A", "B", "B", "C", "B", "D", "D", "E", "D", "F"), directed=FALSE)
+    paths <- defineMSTPaths(g2, times=c(A=10, B=0, C=2, D=0, E=10, F=10))
+    expect_identical(paths, list(c("B", "A"), c("B", "C"), c("D", "E"), c("D", "F")))
 })
 
 set.seed(1000)
