@@ -88,6 +88,15 @@ In the mock example below, the branch point at cluster 1 has the highest time so
 defineMSTPaths(mst, times=c(`1`=4, `2`=0, `3`=1, `4`=0))
 ```
 
+We can also use a root-free method of defining paths through the MST, by simply defining all unbranched segments as separate paths.
+This decomposes the MST into simpler structures for, e.g., detection of marker genes, without explicitly defining a root or requiring external information.
+In fact, one might prefer this approach as it allows us to interpret each section of the MST in a more modular manner,
+without duplication of effort caused by the sharing of nodes across different paths from a common root.
+
+```{r}
+splitByBranches(mst)
+```
+
 # The `PseudotimeOrdering` class
 
 We can create a compact representation of pseudotime orderings in the form of a matrix where rows are cells and columns are paths through the trajectory.

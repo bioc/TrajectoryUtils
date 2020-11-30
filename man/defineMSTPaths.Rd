@@ -50,6 +50,8 @@ defineMSTPaths(test.g, times=c(A=0, B=5, C=2, D=3))
 }
 \seealso{
 \code{\link{guessMSTRoots}}, to obtain \code{roots} without any prior information.
+
+\code{\link{splitByBranches}}, for a root-free way of obtaining paths.
 }
 \author{
 Aaron Lun

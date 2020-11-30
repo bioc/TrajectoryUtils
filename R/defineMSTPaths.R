@@ -39,6 +39,8 @@
 #'
 #' @seealso
 #' \code{\link{guessMSTRoots}}, to obtain \code{roots} without any prior information.
+#'
+#' \code{\link{splitByBranches}}, for a root-free way of obtaining paths.
 #' 
 #' @export
 #' @importFrom igraph V degree graph_from_adjacency_matrix decompose shortest_paths
