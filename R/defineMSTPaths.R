@@ -51,9 +51,11 @@ defineMSTPaths <- function(g, roots, times=NULL, cluster=NULL, use.median=FALSE)
     if (!missing(roots)) {
         for (i in seq_along(forest)) {
             tree <- forest[[i]]
-            deg <- degree(tree)
             named <- names(V(tree))
-            deg1 <- named[deg==1L]
+            if (length(named)==1L) {
+                output[[i]] <- list(named)
+                next
+            }
 
             is.root <- roots %in% named
             if (sum(is.root)!=1) {
@@ -61,6 +63,8 @@ defineMSTPaths <- function(g, roots, times=NULL, cluster=NULL, use.median=FALSE)
             }
             cur.root <- roots[is.root]
 
+            deg <- degree(tree)
+            deg1 <- named[deg == 1L]
             paths <- shortest_paths(tree, from=cur.root, to=setdiff(deg1, cur.root))$vpath
             output[[i]] <- lapply(paths, names)
         }
@@ -98,5 +102,9 @@ defineMSTPaths <- function(g, roots, times=NULL, cluster=NULL, use.median=FALSE)
         }
     }
 
-    unlist(output, recursive=FALSE)
+    if (length(output)) {
+        unlist(output, recursive=FALSE)
+    } else {
+        output
+    }
 }

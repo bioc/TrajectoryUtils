@@ -3,6 +3,8 @@
 
 library(igraph)
 g <- make_graph(c("A", "B", "B", "C", "B", "D"), directed=FALSE)
+solo <- simplify(make_graph(c("A", "A", "B", "B")))
+empty <- make_graph(character(0))
 
 test_that("defineMSTPaths works with preset roots", {
     paths <- defineMSTPaths(g, roots="A")
@@ -17,6 +19,10 @@ test_that("defineMSTPaths works with preset roots", {
 
     paths <- defineMSTPaths(g2, roots=c("D", "E"))
     expect_identical(paths, list(c("D", "B", "A"), c("D", "B", "C"), c("E", "F")))
+
+    # Testing for singletons.
+    expect_identical(defineMSTPaths(empty, roots=character(0)), list())
+    expect_identical(defineMSTPaths(solo, roots=c("A", "B")), list("A", "B"))
 })
 
 test_that("defineMSTPaths works with per-node times", {
@@ -46,6 +52,10 @@ test_that("defineMSTPaths works with per-node times", {
     g2 <- make_graph(c("A", "B", "B", "C", "B", "D", "D", "E", "D", "F"), directed=FALSE)
     paths <- defineMSTPaths(g2, times=c(A=10, B=0, C=2, D=0, E=10, F=10))
     expect_identical(paths, list(c("B", "A"), c("B", "C"), c("D", "E"), c("D", "F")))
+
+    # Testing for singletons.
+    expect_identical(defineMSTPaths(empty, times=numeric(0), roots=character(0)), list())
+    expect_identical(defineMSTPaths(solo, times=c(A=1, B=2)), list("A", "B"))
 })
 
 set.seed(1000)
