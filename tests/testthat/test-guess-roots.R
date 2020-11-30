@@ -10,6 +10,7 @@ edges2 <- c(edges, "F", "G", "G", "H")
 g2 <- make_graph(edges2, directed=FALSE)
 
 empty <- make_graph(character(0))
+solo <- simplify(make_graph(c("A", "A", "B", "B")))
 
 test_that("guessMSTRoots works with method='degree1'", {
     expect_true(guessMSTRoots(g) %in% c("A", "D", "E"))
@@ -20,6 +21,7 @@ test_that("guessMSTRoots works with method='degree1'", {
     expect_true(multi[2] %in% c("F", "H"))
 
     expect_identical(guessMSTRoots(empty), character(0))
+    expect_identical(guessMSTRoots(solo), c("A", "B"))
 })
 
 test_that("guessMSTRoots works with method='maxstep'", {
@@ -30,6 +32,9 @@ test_that("guessMSTRoots works with method='maxstep'", {
     edges <- c("A", "B", "B", "C", "C", "D", "C", "E", "E", "F", "F", "G", "G", "H")
     g <- make_graph(edges, directed=FALSE)
     expect_identical(guessMSTRoots(g, method="maxstep"), "H")
+
+    expect_identical(guessMSTRoots(empty, method="maxstep"), character(0))
+    expect_identical(guessMSTRoots(solo, method="maxstep"), c("A", "B"))
 })
 
 test_that("guessMSTRoots works with method='maxlen'", {

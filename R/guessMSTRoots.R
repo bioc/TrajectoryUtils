@@ -49,40 +49,41 @@ guessMSTRoots <- function(g, method=c("degree1", "maxstep", "maxlen", "minstep",
 
     for (i in seq_along(forest)) {
         tree <- forest[[i]]
-        deg <- degree(tree)
         named <- names(V(tree))
-        deg1 <- named[deg==1L]
+        if (length(named) == 1L) {
+            roots[[i]] <- named[1]
+            next
+        }
 
-        if (method %in% c("degree1", "maxstep", "maxlen")) {
+        deg <- degree(tree)
+        deg1 <- named[deg <= 1L]
+        if (method=="degree1") {
+            roots[[i]] <- deg1[1]
+            next
+        }
+
+        if (method %in% c("maxstep", "maxlen")) {
             candidates <- deg1
+            FUN <- which.max
         } else {
             candidates <- named
+            FUN <- which.min
         }
 
-        if (method=="degree1") {
-            roots[[i]] <- candidates[1]
-        } else {
-            averages <- numeric(length(candidates))
-            names(averages) <- candidates
-            for (j in candidates) {
-                ends <- setdiff(deg1, j)
-
-                if (method %in% c("minstep", "maxstep")) {
-                    paths <- shortest_paths(g, from = j, to = ends, output = 'vpath')$vpath
-                    averages[j] <- mean(lengths(paths))
-                } else {
-                    dists <- distances(g, v = j, to = ends)
-                    averages[j] <- mean(dists)
-                }
-            }
-
-            if (method %in% c("maxstep", "maxlen")) {
-                FUN <- which.max
+        averages <- numeric(length(candidates))
+        names(averages) <- candidates
+        for (j in candidates) {
+            ends <- setdiff(deg1, j)
+            if (method %in% c("minstep", "maxstep")) {
+                paths <- shortest_paths(g, from = j, to = ends, output = 'vpath')$vpath
+                averages[j] <- mean(lengths(paths))
             } else {
-                FUN <- which.min
+                dists <- distances(g, v = j, to = ends)
+                averages[j] <- mean(dists)
             }
-            roots[[i]] <- candidates[FUN(averages)]
         }
+
+        roots[[i]] <- candidates[FUN(averages)]
     }
 
     # As character for the edge case of an empty list.
