@@ -172,5 +172,8 @@ test_that("MST construction works with scaled distances", {
 
     mst <- createClusterMST(y.complex, clusters=clusters.complex, dist.method="slingshot")
     expect_true(igraph::are_adjacent(mst, "1", "2"))
+
+    # warnings out!
+    expect_warning(createClusterMST(y0.complex, clusters=clusters.complex, dist.method="slingshot", use.median=TRUE), "unpredictable")
 })
 

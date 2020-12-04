@@ -111,6 +111,9 @@
 #' Enabling this option is advisable if one observes that the default centroid is not located near any of its points due to outliers.
 #' Note that the centroids computed in this manner is not a true medoid, which was too much of a pain to compute.
 #' 
+#' A warning will be raised if \code{use.median=TRUE} and \code{dist.method="scaled.diag"} or one of the related choices.
+#' This is because the Mahalanobis distances will not be correctly computed when the centers are medians instead of means.
+#'
 #' @return A \link{graph} object containing an MST computed on \code{centers}.
 #' Each node corresponds to a cluster centroid and has a numeric vector of coordinates in the \code{coordinates} attribute.
 #' The edge weight is set to the Euclidean distance and the confidence is stored as the \code{gain} attribute.
@@ -187,6 +190,10 @@ NULL
             dmat <- .create_mnn_distance_matrix(x, max.col(clusters), levels=rownames(centers), 
                 mnn.k=mnn.k, BNPARAM=BNPARAM, BPPARAM=BPPARAM)
         } else {
+            if (use.median) {
+                # Distances not really intepretable as Mahalanobis distances anymore.
+                warning("'use.median=TRUE' with 'dist.method=\"", dist.method, "\"' may yield unpredictable results")
+            }
             use.full <- (dist.method == "scaled.full" || (dist.method == "slingshot" && min(table(clusters)) <= ncol(x)))
             dmat <- .dist_clusters_scaled(x, clusters, centers, full=use.full)
         }

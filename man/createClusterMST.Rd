@@ -171,6 +171,9 @@ If \code{use.median=TRUE}, the median across all cells in each cluster is used t
 This protects against outliers but is less stable than the mean.
 Enabling this option is advisable if one observes that the default centroid is not located near any of its points due to outliers.
 Note that the centroids computed in this manner is not a true medoid, which was too much of a pain to compute.
+
+A warning will be raised if \code{use.median=TRUE} and \code{dist.method="scaled.diag"} or one of the related choices.
+This is because the Mahalanobis distances will not be correctly computed when the centers are medians instead of means.
 }
 
 \examples{
