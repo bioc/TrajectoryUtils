@@ -1,5 +1,5 @@
 # This tests the defineMSTPaths function.
-# library(testthat); library(TrajectoryUtils); source("test-define-paths.R")
+# library(testthat); library(TrajectoryUtils); source("setup.R"); source("test-define-paths.R")
 
 library(igraph)
 g <- make_graph(c("A", "B", "B", "C", "B", "D"), directed=FALSE)
@@ -67,7 +67,13 @@ test_that("per-node timings can be computed from clusters", {
     out <- defineMSTPaths(g, times=timings, cluster=clusters)
     expect_identical(ref, out)
 
+    out <- defineMSTPaths(g, times=timings, cluster=factor2matrix(clusters))
+    expect_identical(ref, out)
+
     ref <- defineMSTPaths(g, times=vapply(split(timings, clusters), median, 0))
     out <- defineMSTPaths(g, times=timings, cluster=clusters, use.median=TRUE)
+    expect_identical(ref, out)
+
+    out <- defineMSTPaths(g, times=timings, cluster=factor2matrix(clusters), use.median=TRUE)
     expect_identical(ref, out)
 })

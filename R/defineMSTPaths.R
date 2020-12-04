@@ -7,12 +7,18 @@
 #' @param times A numeric vector of length equal to the number of nodes in \code{g},
 #' specifying the external time associated with each node.
 #' This should be named with the name of each node.
-#' Alternatively, a numeric vector of length equal to the number of cells, in which case \code{cluster} must be specified.
+#' Alternatively, a numeric vector of length equal to the number of cells, in which case \code{clusters} must be specified.
 #' @param cluster A vector or factor specifying the assigned cluster for each cell,
 #' where each cluster corresponds to a node in \code{g}.
-#' Only used if \code{times} is set to a vector of length equal to the number of cells.
+#'
+#' Alternatively, a matrix with number of rows equal to \code{nrow(x)}, 
+#' containing soft assignment weights for each cluster (column).
+#' All weights should be positive and sum to 1 for each row.
+#' 
+#' This only has an effect if \code{times} is set to a vector of length equal to the number of cells.
 #' @param use.median Logical scalar indicating whether the time for each cluster is defined as the median time across its cells.
 #' The mean is used by default.
+#' This only has an effect if \code{clusters} is specified.
 #'
 #' @return
 #' A list of character vectors.
@@ -44,7 +50,7 @@
 #' 
 #' @export
 #' @importFrom igraph V degree graph_from_adjacency_matrix decompose shortest_paths
-defineMSTPaths <- function(g, roots, times=NULL, cluster=NULL, use.median=FALSE) {
+defineMSTPaths <- function(g, roots, times=NULL, clusters=NULL, use.median=FALSE) {
     forest <- decompose(g)
     output <- vector("list", length(forest))
 
@@ -72,9 +78,9 @@ defineMSTPaths <- function(g, roots, times=NULL, cluster=NULL, use.median=FALSE)
         if (is.null(times)) {
             stop("'times' must be specified if 'roots' is missing")
         }
-        if (!is.null(cluster)) {
-            FUN <- if (use.median) median else mean
-            times <- vapply(split(times, cluster), FUN, 0)
+        if (!is.null(clusters)) {
+            FUN <- if (use.median) rowmedian else rowmean
+            times <- FUN(cbind(times), clusters)[,1]
         }
 
         for (i in seq_along(forest)) {
