@@ -29,6 +29,10 @@
 #' @param clusters A factor-like object of the same length as \code{nrow(x)},
 #' specifying the cluster identity for each cell in \code{x}.
 #' If \code{NULL}, \code{x} is assumed to already contain coordinates for the cluster centroids.
+#'
+#' Alternatively, a matrix with number of rows equal to \code{nrow(x)}, 
+#' containing soft assignment weights for each cluster (column).
+#' All weights should be positive and sum to 1 for each row.
 #' @param columns A character, logical or integer vector specifying the columns of \code{x} to use.
 #' If \code{NULL}, all provided columns are used by default. 
 #' @param outgroup A logical scalar indicating whether an outgroup should be inserted to split unrelated trajectories.
@@ -47,6 +51,17 @@
 #' see the \pkg{BiocNeighbors} package for more details.
 #' @param BPPARAM A BiocParallelParam object specifying whether the nearest neighbor search should be parallelized when \code{dist.method="mnn"},
 #' see the \pkg{BiocNeighbors} package for more details.
+#'
+#' @section Computing the centroids:
+#' By default, the cluster centroid is defined by taking the mean value across all of its cells for each dimension.
+#' If \code{clusters} is a matrix, a weighted mean is used instead.
+#' This treats the column of weights as fractional identities of each cell to the corresponding cluster.
+#' 
+#' If \code{use.median=TRUE}, the median across all cells in each cluster is used to compute the centroid coordinate for each dimension.
+#' (With a matrix-like \code{clusters}, a weighted median is calculated.)
+#' This protects against outliers but is less stable than the mean.
+#' Enabling this option is advisable if one observes that the default centroid is not located near any of its points due to outliers.
+#' Note that the centroids computed in this manner is not a true medoid, which was too much of a pain to compute.
 #'
 #' @section Introducing an outgroup:
 #' If \code{outgroup=TRUE}, we add an outgroup to avoid constructing a trajectory between \dQuote{unrelated} clusters (Street et al., 2018).
@@ -87,6 +102,11 @@
 #' but switches to \code{"scaled.diag"} in the presence of small clusters (fewer cells than dimensions in the reduced dimensional space). 
 #' \item For \code{"mnn"}, see the more detailed explanation below.
 #' }
+#' 
+#' If \code{clusters} is a matrix with \code{"scaled.diag"}, \code{"scaled.full"} and \code{"slingshot"}, 
+#' a weighted covariance is computed to account for the assignment ambiguity.
+#' In addition, a warning will be raised if \code{use.median=TRUE} for these choices of \code{dist.method};
+#' the Mahalanobis distances will not be correctly computed when the centers are medians instead of means.
 #'
 #' @section Alternative distances with MNN pairs:
 #' While distances between centroids are usually satisfactory for gauging cluster \dQuote{closeness}, 
@@ -104,15 +124,6 @@
 #' This mode can be enabled by setting \code{dist.method="mnn"}, while the stringency of the MNN definition can be set with \code{mnn.k}.
 #' Similarly, the performance of the nearest neighbor search can be controlled with \code{BPPARAM} and \code{BSPARAM}.
 #' Note that this mode performs a cell-based search and so cannot be used when \code{x} already contains aggregated profiles.
-#'
-#' @section Using medians:
-#' If \code{use.median=TRUE}, the median across all cells in each cluster is used to compute the centroid coordinate for each dimension.
-#' This protects against outliers but is less stable than the mean.
-#' Enabling this option is advisable if one observes that the default centroid is not located near any of its points due to outliers.
-#' Note that the centroids computed in this manner is not a true medoid, which was too much of a pain to compute.
-#' 
-#' A warning will be raised if \code{use.median=TRUE} and \code{dist.method="scaled.diag"} or one of the related choices.
-#' This is because the Mahalanobis distances will not be correctly computed when the centers are medians instead of means.
 #'
 #' @return A \link{graph} object containing an MST computed on \code{centers}.
 #' Each node corresponds to a cluster centroid and has a numeric vector of coordinates in the \code{coordinates} attribute.
@@ -187,15 +198,14 @@ NULL
         }
 
         if (dist.method == "mnn") {
-            dmat <- .create_mnn_distance_matrix(x, max.col(clusters), levels=rownames(centers), 
-                mnn.k=mnn.k, BNPARAM=BNPARAM, BPPARAM=BPPARAM)
+            dmat <- .create_mnn_distance_matrix(x, clusters, mnn.k=mnn.k, BNPARAM=BNPARAM, BPPARAM=BPPARAM)
         } else {
             if (use.median) {
                 # Distances not really intepretable as Mahalanobis distances anymore.
                 warning("'use.median=TRUE' with 'dist.method=\"", dist.method, "\"' may yield unpredictable results")
             }
             use.full <- (dist.method == "scaled.full" || (dist.method == "slingshot" && min(table(clusters)) <= ncol(x)))
-            dmat <- .dist_clusters_scaled(x, clusters, centers, full=use.full)
+            dmat <- .dist_clusters_scaled(x, clusters, centers=centers, full=use.full)
         }
     }
 
@@ -238,9 +248,7 @@ NULL
 
 #' @importFrom stats median
 #' @importFrom Matrix rowSums
-.create_mnn_distance_matrix <- function(x, clusters, levels, mnn.k, BNPARAM=NULL, BPPARAM=NULL) {
-    distances <- matrix(0, length(levels), length(levels), dimnames=list(levels, levels))
-
+.create_mnn_distance_matrix <- function(x, clusters, mnn.k, BNPARAM=NULL, BPPARAM=NULL) {
     if (is.null(BNPARAM)) {
         BNPARAM <- BiocNeighbors::KmknnParam()
     }
@@ -248,29 +256,37 @@ NULL
         BPPARAM <- BiocParallel::SerialParam()
     }
 
+    if (is.matrix(clusters)) {
+        cluster.ids <- .choose_colnames(clusters)
+        clusters <- cluster.ids[max.col(clusters, ties.method="first")]
+    }
+    stopifnot(length(clusters)==nrow(x))
+    by.cluster <- split(seq_along(clusters), clusters)
+    levels <- names(by.cluster)
+
     # Looping through all of them.
     collated <- indices <- vector("list", length(levels))
     for (i in seq_along(levels)) {
-        chosen <- clusters==levels[i]
+        chosen <- by.cluster[[i]]
         collated[[i]] <- x[chosen,,drop=FALSE]
         indices[[i]] <- BiocNeighbors::buildIndex(collated[[i]], BNPARAM=BNPARAM)
     }
 
+    distances <- matrix(0, length(levels), length(levels), dimnames=list(levels, levels))
+
     for (f in seq_along(levels)) {
-        first <- levels[f]
         left <- collated[[f]]
         lefti <- indices[[f]]
 
         for (s in seq_along(levels)) {
-            second <- levels[s]
-            if (first==second) break
+            if (f==s) break
             right <- collated[[s]]
             righti <- indices[[s]]
 
             stuff <- BiocNeighbors::findMutualNN(left, right, k1=mnn.k, 
                 BNINDEX1=lefti, BNINDEX2=righti, BNPARAM=BNPARAM, BPPARAM=BPPARAM)
             dist2 <- rowSums((left[stuff$first,,drop=FALSE] - right[stuff$second,,drop=FALSE])^2)
-            distances[first,second] <- sqrt(median(dist2))
+            distances[f,s] <- sqrt(median(dist2))
         }
     }
 
@@ -298,14 +314,33 @@ NULL
     mst
 }
 
+#' @importFrom Matrix t crossprod
 .dist_clusters_scaled <- function(x, clusters, centers, full) {
     nclust <- nrow(centers)
     output <- matrix(0, nclust, nclust, dimnames=list(rownames(centers), rownames(centers)))
 
+    # Computing the covariances (possibly with weights).
+    all.cor <- vector("list", nclust)
+    names(all.cor) <- rownames(centers)
+
+    if (is.matrix(clusters)) {
+        # Treating the weights as effective frequencies.
+        clusters <- clusters/rowSums(clusters)
+        for (i in seq_along(all.cor)) {
+            curweight <- clusters[,i]
+            out <- t(t(x) - centers[i,]) * sqrt(curweight)
+            all.cor[[i]] <- crossprod(out)/(sum(curweight) - 1)
+        }
+    } else {
+        for (i in seq_along(all.cor)) {
+            all.cor[[i]] <- cov(x[which(clusters==names(all.cor)[i]),, drop = FALSE])
+        }
+    }
+
     for (i in seq_len(nclust)) {
         mu1 <- centers[i,]
         clus1 <- rownames(centers)[i]
-        s1 <- cov(x[which(clusters==clus1),, drop = FALSE])
+        s1 <- all.cor[[i]]
         if (!full) {
             s1 <- diag(diag(s1))
         }
@@ -313,7 +348,7 @@ NULL
         for (j in seq_len(i - 1L)) {
             mu2 <- centers[j,]
             clus2 <- rownames(centers)[j]
-            s2 <- cov(x[which(clusters==clus2),, drop = FALSE])
+            s2 <- all.cor[[j]]
             if (!full) {
                 s2 <- diag(diag(s2))
             }

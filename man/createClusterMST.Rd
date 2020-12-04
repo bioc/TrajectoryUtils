@@ -58,7 +58,11 @@ For the SingleCellExperiment method, further arguments to pass to the Summarized
 
 \item{clusters}{A factor-like object of the same length as \code{nrow(x)},
 specifying the cluster identity for each cell in \code{x}.
-If \code{NULL}, \code{x} is assumed to already contain coordinates for the cluster centroids.}
+If \code{NULL}, \code{x} is assumed to already contain coordinates for the cluster centroids.
+
+Alternatively, a matrix with number of rows equal to \code{nrow(x)}, 
+containing soft assignment weights for each cluster (column).
+All weights should be positive and sum to 1 for each row.}
 
 \item{use.median}{A logical scalar indicating whether cluster centroid coordinates should be computed using the median rather than mean.}
 
@@ -100,6 +104,19 @@ each edge is weighted by the Euclidean distance between centroids.
 This represents the most parsimonious explanation for a particular trajectory
 and has the advantage of being directly intepretable with respect to any pre-existing clusters.
 }
+\section{Computing the centroids}{
+
+By default, the cluster centroid is defined by taking the mean value across all of its cells for each dimension.
+If \code{clusters} is a matrix, a weighted mean is used instead.
+This treats the column of weights as fractional identities of each cell to the corresponding cluster.
+
+If \code{use.median=TRUE}, the median across all cells in each cluster is used to compute the centroid coordinate for each dimension.
+(With a matrix-like \code{clusters}, a weighted median is calculated.)
+This protects against outliers but is less stable than the mean.
+Enabling this option is advisable if one observes that the default centroid is not located near any of its points due to outliers.
+Note that the centroids computed in this manner is not a true medoid, which was too much of a pain to compute.
+}
+
 \section{Introducing an outgroup}{
 
 If \code{outgroup=TRUE}, we add an outgroup to avoid constructing a trajectory between \dQuote{unrelated} clusters (Street et al., 2018).
@@ -144,6 +161,11 @@ This accounts for the cluster shape by considering correlations between dimensio
 but switches to \code{"scaled.diag"} in the presence of small clusters (fewer cells than dimensions in the reduced dimensional space). 
 \item For \code{"mnn"}, see the more detailed explanation below.
 }
+
+If \code{clusters} is a matrix with \code{"scaled.diag"}, \code{"scaled.full"} and \code{"slingshot"}, 
+a weighted covariance is computed to account for the assignment ambiguity.
+In addition, a warning will be raised if \code{use.median=TRUE} for these choices of \code{dist.method};
+the Mahalanobis distances will not be correctly computed when the centers are medians instead of means.
 }
 
 \section{Alternative distances with MNN pairs}{
@@ -163,17 +185,6 @@ In this manner, we focus on cluster pairs that are close at their boundaries rat
 This mode can be enabled by setting \code{dist.method="mnn"}, while the stringency of the MNN definition can be set with \code{mnn.k}.
 Similarly, the performance of the nearest neighbor search can be controlled with \code{BPPARAM} and \code{BSPARAM}.
 Note that this mode performs a cell-based search and so cannot be used when \code{x} already contains aggregated profiles.
-}
-
-\section{Using medians}{
-
-If \code{use.median=TRUE}, the median across all cells in each cluster is used to compute the centroid coordinate for each dimension.
-This protects against outliers but is less stable than the mean.
-Enabling this option is advisable if one observes that the default centroid is not located near any of its points due to outliers.
-Note that the centroids computed in this manner is not a true medoid, which was too much of a pain to compute.
-
-A warning will be raised if \code{use.median=TRUE} and \code{dist.method="scaled.diag"} or one of the related choices.
-This is because the Mahalanobis distances will not be correctly computed when the centers are medians instead of means.
 }
 
 \examples{

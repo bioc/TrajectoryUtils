@@ -12,7 +12,8 @@ rowmedian(x, group, ...)
 \arguments{
 \item{x}{A numeric matrix or matrix-like object.}
 
-\item{group}{A vector or factor specifying the group assignment for each row of \code{x}.}
+\item{group}{A vector or factor specifying the group assignment for each row of \code{x}.
+Alternatively, a matrix of soft assignments for each row to each group (column).}
 
 \item{...}{Further arguments to pass to \code{\link{rowMeans}} or \code{\link{rowMedians}}.}
 }
@@ -28,6 +29,10 @@ The naming scheme here is somewhat inspired by the \code{rowsum} function from t
 which is in turn a transposed counterpart to \code{\link{colsum}}.
 Admittedly, it is rather confusing when \code{\link{rowMeans}} computes the mean for a row across all columns
 while \code{rowmean} computes the mean for a column across a subset of rows, but there you have it.
+
+If \code{group} is a matrix, it is expected to contain soft assignment weights for each row in \code{x}.
+Each row of \code{group} should contain non-negative values that sum to unity.
+These are used to compute weighted means or medians via \pkg{MatrixGenerics} functions.
 }
 \examples{
 x <- matrix(runif(100), ncol = 5)

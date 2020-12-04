@@ -1,5 +1,5 @@
 # This tests the createClusterMST function.
-# library(testthat); library(TrajectoryUtils); source("test-create-mst.R")
+# library(testthat); library(TrajectoryUtils); source("setup.R"); source("test-create-mst.R")
 
 set.seed(1000)
 
@@ -67,6 +67,27 @@ test_that("MST construction works as expected with columns", {
     mst <- createClusterMST(y[,1:5], cluster=NULL)
     mst0 <- createClusterMST(y, cluster=NULL, columns=1:5)
     expect_identical(mst[], mst0[])
+})
+
+test_that("MST construction works as expected with weights", {
+    y <- matrix(rnorm(100), ncol=2)
+    clusters <- sample(5, nrow(y), replace=TRUE)
+    mat <- factor2matrix(clusters)
+
+    ref <- createClusterMST(y, clusters=clusters)
+    mst <- createClusterMST(y, clusters=mat)
+    expect_equal(mst[], ref[])
+
+    mst <- createClusterMST(y, clusters=abs(jitter(mat)))
+    expect_false(isTRUE(all.equal(mst[], ref[])))
+
+    # And again, with medians. 
+    ref <- createClusterMST(y, clusters=clusters, use.median=TRUE)
+    mst <- createClusterMST(y, clusters=mat, use.median=TRUE)
+    expect_equal(mst[], ref[])
+
+    mst <- createClusterMST(y, clusters=abs(jitter(mat)), use.median=TRUE)
+    expect_false(isTRUE(all.equal(mst[], ref[])))
 })
 
 test_that("MST construction works as expected with outgroup specification", {
@@ -142,6 +163,14 @@ test_that("MST construction works with MNN-based distances", {
     expect_false(igraph::are_adjacent(ref, "1", "2"))
     mst <- createClusterMST(y.complex, clusters=clusters.complex, dist.method="mnn")
     expect_true(igraph::are_adjacent(mst, "1", "2"))
+
+    # Quietly ignores weight matrices.
+    mat <- factor2matrix(clusters.complex)
+    wmst <- createClusterMST(y.complex, clusters=mat, dist.method="mnn")
+    expect_identical(mst[], wmst[])
+
+    wmst <- createClusterMST(y.complex, clusters=abs(jitter(mat)), dist.method="mnn")
+    expect_identical(mst[], wmst[])
 })
 
 set.seed(100102)
@@ -173,7 +202,15 @@ test_that("MST construction works with scaled distances", {
     mst <- createClusterMST(y.complex, clusters=clusters.complex, dist.method="slingshot")
     expect_true(igraph::are_adjacent(mst, "1", "2"))
 
+    # Works correctly with weight matrices.
+    mat <- factor2matrix(clusters.complex)
+    wmst <- createClusterMST(y.complex, clusters=mat, dist.method="slingshot")
+    expect_equal(mst[], wmst[])
+
+    wmst <- createClusterMST(y.complex, clusters=abs(jitter(mat)), dist.method="slingshot") # Slightly different result with non-identical weights.
+    expect_false(isTRUE(all.equal(mst[], wmst[])))
+
     # warnings out!
-    expect_warning(createClusterMST(y0.complex, clusters=clusters.complex, dist.method="slingshot", use.median=TRUE), "unpredictable")
+    expect_warning(createClusterMST(y.complex, clusters=clusters.complex, dist.method="slingshot", use.median=TRUE), "unpredictable")
 })
 
