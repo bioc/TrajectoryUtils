@@ -23,7 +23,6 @@ Suggests:
     BiocNeighbors,
     DelayedArray,
     DelayedMatrixStats,
-    batchelor,
     BiocParallel,
     testthat,
     knitr,

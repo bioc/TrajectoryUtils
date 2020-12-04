@@ -77,7 +77,7 @@ If \code{NULL}, all provided columns are used by default.}
 \item{with.mnn}{Logical scalar, deprecated; use \code{dist.method="mnn"} instead.}
 
 \item{mnn.k}{An integer scalar specifying the number of nearest neighbors to consider for the MNN-based distance calculation when \code{dist.method="mnn"}.
-See \code{\link[batchelor]{findMutualNN}} for more details.}
+See \code{\link[BiocNeighbors]{findMutualNN}} for more details.}
 
 \item{BNPARAM}{A BiocNeighborParam object specifying how the nearest-neighbor search should be performed when \code{dist.method="mnn"},
 see the \pkg{BiocNeighbors} package for more details.}

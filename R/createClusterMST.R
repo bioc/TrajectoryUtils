@@ -42,7 +42,7 @@
 #' @param dist.method A string specifying the distance measure to be used, see Details.
 #' @param with.mnn Logical scalar, deprecated; use \code{dist.method="mnn"} instead.
 #' @param mnn.k An integer scalar specifying the number of nearest neighbors to consider for the MNN-based distance calculation when \code{dist.method="mnn"}.
-#' See \code{\link[batchelor]{findMutualNN}} for more details.
+#' See \code{\link[BiocNeighbors]{findMutualNN}} for more details.
 #' @param BNPARAM A BiocNeighborParam object specifying how the nearest-neighbor search should be performed when \code{dist.method="mnn"},
 #' see the \pkg{BiocNeighbors} package for more details.
 #' @param BPPARAM A BiocParallelParam object specifying whether the nearest neighbor search should be parallelized when \code{dist.method="mnn"},
@@ -184,7 +184,7 @@ NULL
         }
 
         if (dist.method == "mnn") {
-            dmat <- .create_mnn_distance_matrix(x, clusters, levels=rownames(centers), 
+            dmat <- .create_mnn_distance_matrix(x, max.col(clusters), levels=rownames(centers), 
                 mnn.k=mnn.k, BNPARAM=BNPARAM, BPPARAM=BPPARAM)
         } else {
             use.full <- (dist.method == "scaled.full" || (dist.method == "slingshot" && min(table(clusters)) <= ncol(x)))
@@ -241,14 +241,27 @@ NULL
         BPPARAM <- BiocParallel::SerialParam()
     }
 
-    # TODO: modify batchelor so that findMutualNN can accept indices.
-    for (first in levels) {
-        left <- x[clusters==first,,drop=FALSE]
-        for (second in levels) {
-            if (first==second) break
+    # Looping through all of them.
+    collated <- indices <- vector("list", length(levels))
+    for (i in seq_along(levels)) {
+        chosen <- clusters==levels[i]
+        collated[[i]] <- x[chosen,,drop=FALSE]
+        indices[[i]] <- BiocNeighbors::buildIndex(collated[[i]], BNPARAM=BNPARAM)
+    }
 
-            right <- x[clusters==second,,drop=FALSE]
-            stuff <- batchelor::findMutualNN(left, right, k1=mnn.k, BNPARAM=BNPARAM, BPPARAM=BPPARAM)
+    for (f in seq_along(levels)) {
+        first <- levels[f]
+        left <- collated[[f]]
+        lefti <- indices[[f]]
+
+        for (s in seq_along(levels)) {
+            second <- levels[s]
+            if (first==second) break
+            right <- collated[[s]]
+            righti <- indices[[s]]
+
+            stuff <- BiocNeighbors::findMutualNN(left, right, k1=mnn.k, 
+                BNINDEX1=lefti, BNINDEX2=righti, BNPARAM=BNPARAM, BPPARAM=BPPARAM)
             dist2 <- rowSums((left[stuff$first,,drop=FALSE] - right[stuff$second,,drop=FALSE])^2)
             distances[first,second] <- sqrt(median(dist2))
         }
