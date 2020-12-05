@@ -15,7 +15,7 @@ rowmedian(x, group, ...)
 \item{group}{A vector or factor specifying the group assignment for each row of \code{x}.
 Alternatively, a matrix of soft assignments for each row to each group (column).}
 
-\item{...}{Further arguments to pass to \code{\link{rowMeans}} or \code{\link{rowMedians}}.}
+\item{...}{Further arguments to pass to \code{\link{rowMeans}} or \code{\link[DelayedMatrixStats]{rowMedians}}.}
 }
 \value{
 A numeric matrix with one row per level of \code{group},
@@ -25,8 +25,7 @@ where the value for each column contains the mean or median across the subset of
 Computes the column mean or median for each group of rows in a matrix.
 }
 \details{
-The naming scheme here is somewhat inspired by the \code{rowsum} function from the \pkg{DelayedArray} package,
-which is in turn a transposed counterpart to \code{\link{colsum}}.
+The naming scheme here is somewhat inspired by the \code{\link{rowsum}} function. 
 Admittedly, it is rather confusing when \code{\link{rowMeans}} computes the mean for a row across all columns
 while \code{rowmean} computes the mean for a column across a subset of rows, but there you have it.
 

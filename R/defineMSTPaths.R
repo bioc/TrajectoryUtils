@@ -8,7 +8,7 @@
 #' specifying the external time associated with each node.
 #' This should be named with the name of each node.
 #' Alternatively, a numeric vector of length equal to the number of cells, in which case \code{clusters} must be specified.
-#' @param cluster A vector or factor specifying the assigned cluster for each cell,
+#' @param clusters A vector or factor specifying the assigned cluster for each cell,
 #' where each cluster corresponds to a node in \code{g}.
 #'
 #' Alternatively, a matrix with number of rows equal to \code{nrow(x)}, 

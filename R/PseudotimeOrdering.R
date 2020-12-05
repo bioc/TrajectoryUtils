@@ -121,6 +121,8 @@
 #' PseudotimeOrdering-class
 #' show,PseudotimeOrdering-method
 #'
+#' ncells
+#' npaths
 #' pathStatNames
 #' pathStatNames<-
 #' pathStatNames<-,PseudotimeOrdering-method

@@ -16,11 +16,7 @@ specifying the external time associated with each node.
 This should be named with the name of each node.
 Alternatively, a numeric vector of length equal to the number of cells, in which case \code{clusters} must be specified.}
 
-\item{use.median}{Logical scalar indicating whether the time for each cluster is defined as the median time across its cells.
-The mean is used by default.
-This only has an effect if \code{clusters} is specified.}
-
-\item{cluster}{A vector or factor specifying the assigned cluster for each cell,
+\item{clusters}{A vector or factor specifying the assigned cluster for each cell,
 where each cluster corresponds to a node in \code{g}.
 
 Alternatively, a matrix with number of rows equal to \code{nrow(x)}, 
@@ -28,6 +24,10 @@ containing soft assignment weights for each cluster (column).
 All weights should be positive and sum to 1 for each row.
 
 This only has an effect if \code{times} is set to a vector of length equal to the number of cells.}
+
+\item{use.median}{Logical scalar indicating whether the time for each cluster is defined as the median time across its cells.
+The mean is used by default.
+This only has an effect if \code{clusters} is specified.}
 }
 \value{
 A list of character vectors.

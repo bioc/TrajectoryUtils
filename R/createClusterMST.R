@@ -383,7 +383,7 @@ setMethod("createClusterMST", "SummarizedExperiment", function(x, ..., assay.typ
 
 #' @export
 #' @rdname createClusterMST
-#' @importFrom SingleCellExperiment reducedDim
+#' @importFrom SingleCellExperiment reducedDim colLabels
 #' @importClassesFrom SingleCellExperiment SingleCellExperiment
 setMethod("createClusterMST", "SingleCellExperiment", function(x, clusters=colLabels(x, onAbsence="error"), ..., use.dimred=NULL) {
     if (!is.null(use.dimred)) {

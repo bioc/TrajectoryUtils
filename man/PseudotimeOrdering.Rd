@@ -5,6 +5,8 @@
 \alias{PseudotimeOrdering}
 \alias{PseudotimeOrdering-class}
 \alias{show,PseudotimeOrdering-method}
+\alias{ncells}
+\alias{npaths}
 \alias{pathStatNames}
 \alias{pathStatNames<-}
 \alias{pathStatNames<-,PseudotimeOrdering-method}
