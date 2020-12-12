@@ -1,6 +1,6 @@
 Package: TrajectoryUtils
-Version: 0.98.0
-Date: 2020-11-08
+Version: 0.99.0
+Date: 2020-12-11
 Title: Single-Cell Trajectory Analysis Utilities
 Description: 
     Implements low-level utilities for single-cell trajectory analysis,
@@ -8,7 +8,10 @@ Description:
     Include a function to create a cluster-level minimum spanning tree
     and data structures to hold pseudotime inference results.
 Authors@R: 
-    person("Aaron", "Lun", role=c("aut", "cre"), email="infinite.monkeys.with.keyboards@gmail.com")
+    c(
+        person("Aaron", "Lun", role=c("aut", "cre"), email="infinite.monkeys.with.keyboards@gmail.com"),
+        person("Kelly", "Street", role="aut")
+    )
 License: GPL-3
 biocViews: GeneExpression, SingleCell
 Depends:
