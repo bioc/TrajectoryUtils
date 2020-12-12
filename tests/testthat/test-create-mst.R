@@ -113,8 +113,19 @@ test_that("MST construction works as expected with outgroup specification", {
     expect_identical(sum(mst[]["D",]), 0)
     expect_identical(sum(mst[][,"D"]), 0)
 
+    # Automated outgroup calculation is done correctly.
+    y <- rbind(A=c(0, 1), B=c(0, 2), C=c(0, 4), D=c(0, 10.001))
+    out <- createClusterMST(y, clusters=NULL, outgroup=TRUE, outscale=3)
+    expect_identical(igraph::components(out)$no, 2L)
+
+    y[length(y)] <- 9.999
+    out <- createClusterMST(y, clusters=NULL, outgroup=TRUE, outscale=3)
+    expect_identical(igraph::components(out)$no, 1L)
+
     # Gain calculations are *mostly* unaffected. Kind of depends
     # on whether the rerouted path passes through the outgroup.
+    y <- rbind(A=c(0, 1), B=c(0, 2), C=c(0, 3), D=c(0, 4)) 
+    ref <- createClusterMST(y, cluster=NULL)
     mst <- createClusterMST(y, outgroup=TRUE, outscale=10, cluster=NULL)
     expect_identical(igraph::E(ref)$gain, igraph::E(mst)$gain)
 })

@@ -234,11 +234,8 @@ NULL
         }
 
         old.d <- rownames(dmat)
-
-        # Divide by 2 so rerouted distance between cluster pairs is 'outgroup'.
-        dmat <- rbind(cbind(dmat, outgroup/2), outgroup/2) 
-        diag(dmat) <- 0
-
+        dmat <- rbind(cbind(dmat, outgroup), outgroup) 
+        dmat[length(dmat)] <- 0
         special.name <- strrep("x", max(nchar(old.d))+1L)
         rownames(dmat) <- colnames(dmat) <- c(old.d, special.name)
     }
