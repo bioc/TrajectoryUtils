@@ -40,6 +40,7 @@
 #' @param outscale A numeric scalar specifying the scaling to apply to the median distance between centroids
 #' to define the threshold for outgroup splitting.
 #' Only used if \code{outgroup=TRUE}.
+#' @param endpoints A character vector of clusters that must be endpoints, i.e., nodes of degree 1 or lower in the MST.
 #' @param assay.type An integer or string specifying the assay to use from a SummarizedExperiment \code{x}.
 #' @param use.dimred An integer or string specifying the reduced dimensions to use from a SingleCellExperiment \code{x}.
 #' @param use.median A logical scalar indicating whether cluster centroid coordinates should be computed using the median rather than mean.
@@ -75,6 +76,12 @@
 #' This adapts to the magnitude of the distances and the internal structure of the dataset
 #' while also providing some margin for variation across cluster pairs.
 #' Alternatively, \code{outgroup} can be set to a numeric scalar in which case it is used directly as \eqn{\omega}.
+#'
+#' @section Forcing endpoints:
+#' If certain clusters are known to be endpoints (e.g., because they represent terminal states),
+#' the MST can be forced to treat them as such by setting \code{endpoints}.
+#' This ensures that the returned graph will have such clusters as nodes of degree 1, i.e., they terminate the path.
+#' Note that these edges will have very high confidence values (see below) as they are forced to exist during graph construction.
 #'
 #' @section Confidence on the edges:
 #' For the MST, we obtain a measure of the confidence in each edge by computing the distance gained if that edge were not present.
@@ -169,7 +176,10 @@ NULL
 
 #' @importFrom igraph graph.adjacency minimum.spanning.tree delete_vertices E V V<-
 #' @importFrom stats median dist
-.create_cluster_mst <- function(x, clusters, use.median=FALSE, outgroup=FALSE, outscale=3, columns=NULL, dist.method = c("simple", "scaled.full", "scaled.diag", "slingshot", "mnn"), with.mnn=FALSE, mnn.k=50, BNPARAM=NULL, BPPARAM=NULL) {
+.create_cluster_mst <- function(x, clusters, use.median=FALSE, outgroup=FALSE, outscale=3, endpoints=NULL, columns=NULL,
+    dist.method = c("simple", "scaled.full", "scaled.diag", "slingshot", "mnn"), 
+    with.mnn=FALSE, mnn.k=50, BNPARAM=NULL, BPPARAM=NULL) 
+{
     if (!is.null(columns)) {
         x <- x[,columns,drop=FALSE]                
     }
@@ -209,6 +219,12 @@ NULL
         }
     }
 
+    # Ensure all distances are positive, as zero weights = no edge. 
+    # We'll use the upper limit later on, hence the range().
+    limits <- range(dmat[dmat > 0])
+    dmat[] <- pmax(dmat, limits[1] / 1e6)
+    diag(dmat) <- 0
+
     if (!isFALSE(outgroup)) {
         if (!is.numeric(outgroup)) {
             g <- graph.adjacency(dmat, mode = "undirected", weighted = TRUE)
@@ -225,6 +241,24 @@ NULL
 
         special.name <- strrep("x", max(nchar(old.d))+1L)
         rownames(dmat) <- colnames(dmat) <- c(old.d, special.name)
+    }
+
+    if (!is.null(endpoints)) {
+        # Forcing the MST to pass through the closest edge. We don't just
+        # delete the other edges because this would break the edge confidence
+        # estimation when there are no other routes to use to connect nodes. 
+        upper.limit <- limits[2] * 1e6
+        for (e in endpoints) {
+            others <- setdiff(rownames(dmat), e)
+            if (!isFALSE(outgroup)) {
+                others <- setdiff(others, special.name)
+            }
+
+            closest <- which.min(dmat[others,e])
+            others <- others[-closest]
+            dmat[others,e] <- upper.limit
+            dmat[e,others] <- upper.limit
+        }
     }
 
     g <- graph.adjacency(dmat, mode = "undirected", weighted = TRUE)

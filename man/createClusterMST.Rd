@@ -15,6 +15,7 @@ createClusterMST(x, ...)
   use.median = FALSE,
   outgroup = FALSE,
   outscale = 3,
+  endpoints = NULL,
   columns = NULL,
   dist.method = c("simple", "scaled.full", "scaled.diag", "slingshot", "mnn"),
   with.mnn = FALSE,
@@ -73,6 +74,8 @@ Alternatively, a numeric scalar specifying the distance threshold to use for thi
 to define the threshold for outgroup splitting.
 Only used if \code{outgroup=TRUE}.}
 
+\item{endpoints}{A character vector of clusters that must be endpoints, i.e., nodes of degree 1 or lower in the MST.}
+
 \item{columns}{A character, logical or integer vector specifying the columns of \code{x} to use.
 If \code{NULL}, all provided columns are used by default.}
 
@@ -130,6 +133,14 @@ computing the median edge length in that MST, and then scaling it by \code{outsc
 This adapts to the magnitude of the distances and the internal structure of the dataset
 while also providing some margin for variation across cluster pairs.
 Alternatively, \code{outgroup} can be set to a numeric scalar in which case it is used directly as \eqn{\omega}.
+}
+
+\section{Forcing endpoints}{
+
+If certain clusters are known to be endpoints (e.g., because they represent terminal states),
+the MST can be forced to treat them as such by setting \code{endpoints}.
+This ensures that the returned graph will have such clusters as nodes of degree 1, i.e., they terminate the path.
+Note that these edges will have very high confidence values (see below) as they are forced to exist during graph construction.
 }
 
 \section{Confidence on the edges}{

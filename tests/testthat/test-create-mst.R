@@ -112,6 +112,42 @@ test_that("MST construction works as expected with outgroup specification", {
     mst <- createClusterMST(y, outgroup=TRUE, cluster=NULL)
     expect_identical(sum(mst[]["D",]), 0)
     expect_identical(sum(mst[][,"D"]), 0)
+
+    # Gain calculations are *mostly* unaffected. Kind of depends
+    # on whether the rerouted path passes through the outgroup.
+    mst <- createClusterMST(y, outgroup=TRUE, outscale=10, cluster=NULL)
+    expect_identical(igraph::E(ref)$gain, igraph::E(mst)$gain)
+})
+
+test_that("MST construction works with endpoint specification", {
+    y <- rbind(A=c(0, 1), B=c(0, 2), C=c(0, 3), D=c(0, 4)) 
+    out <- createClusterMST(y, endpoint="B", clusters=NULL)
+    expect_true(igraph::degree(out, "B")==1L)
+    expect_true(igraph::E(out)$gain[1] > 100000)
+
+    out <- createClusterMST(y, endpoint=c("B", "C"), outgroup=TRUE, clusters=NULL)
+    expect_true(igraph::degree(out, "B")==1L)
+    expect_true(igraph::degree(out, "C")==1L)
+    expect_identical(igraph::components(out)$no, 2L)
+
+    # Does sensible things when it doesn't need to.
+    ref <- createClusterMST(y, clusters=NULL)
+    out <- createClusterMST(y, endpoint=c("A", "D"), clusters=NULL)
+    expect_identical(ref[], out[])
+
+    # Behaves correctly with outgroup=. This example is carefully designed
+    # with a spacing of C and D such that it only JUST causes outgroup formation,
+    # so it'll fail if endpoints= screws the outgroup= distance calculation.
+    y <- rbind(A=c(0, 1), B=c(0, 2), C=c(0, 4), D=c(0, 10.001))
+    ref <- createClusterMST(y, clusters=NULL, outgroup=TRUE)
+    out <- createClusterMST(y, endpoint=c("A", "D"), clusters=NULL, outgroup=TRUE)
+    expect_identical(ref[], out[])
+})
+
+test_that("MST construction doesn't fail with identical points", {
+    y <- rbind(A=c(0, 1), A2=c(0, 1), B=c(0, 2), C=c(0, 3), D=c(0, 4)) 
+    out <- createClusterMST(y, endpoint="B", clusters=NULL)
+    expect_true(igraph::are_adjacent(out, "A", "A2"))
 })
 
 library(SingleCellExperiment)
