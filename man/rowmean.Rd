@@ -5,17 +5,15 @@
 \alias{rowmedian}
 \title{Compute column means based on a grouping variable}
 \usage{
-rowmean(x, group, ...)
+rowmean(x, group)
 
-rowmedian(x, group, ...)
+rowmedian(x, group)
 }
 \arguments{
 \item{x}{A numeric matrix or matrix-like object.}
 
 \item{group}{A vector or factor specifying the group assignment for each row of \code{x}.
 Alternatively, a matrix of soft assignments for each row to each group (column).}
-
-\item{...}{Further arguments to pass to \code{\link{rowMeans}} or \code{\link[DelayedMatrixStats]{rowMedians}}.}
 }
 \value{
 A numeric matrix with one row per level of \code{group},

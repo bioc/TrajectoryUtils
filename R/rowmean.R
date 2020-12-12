@@ -5,7 +5,6 @@
 #' @param x A numeric matrix or matrix-like object.
 #' @param group A vector or factor specifying the group assignment for each row of \code{x}.
 #' Alternatively, a matrix of soft assignments for each row to each group (column).
-#' @param ... Further arguments to pass to \code{\link{rowMeans}} or \code{\link[DelayedMatrixStats]{rowMedians}}.
 #'
 #' @details
 #' The naming scheme here is somewhat inspired by the \code{\link{rowsum}} function. 
@@ -29,7 +28,7 @@
 #'
 #' @export
 #' @importFrom Matrix colMeans
-rowmean <- function(x, group, ...) {
+rowmean <- function(x, group) {
     if (is.matrix(group)) {
         .rowstats_w(DelayedArray::DelayedArray(x), group, FUN=DelayedMatrixStats::colWeightedMeans)
     } else {
@@ -39,11 +38,11 @@ rowmean <- function(x, group, ...) {
 
 #' @export
 #' @rdname rowmean
-rowmedian <- function(x, group, ...) {
+rowmedian <- function(x, group) {
     if (is.matrix(group)) {
-        .rowstats_w(DelayedArray::DelayedArray(x), group, FUN=DelayedMatrixStats::colWeightedMedians, ...)
+        .rowstats_w(DelayedArray::DelayedArray(x), group, FUN=DelayedMatrixStats::colWeightedMedians)
     } else {
-        .rowstats(DelayedArray::DelayedArray(x), group, FUN=DelayedMatrixStats::colMedians, ...)
+        .rowstats(DelayedArray::DelayedArray(x), group, FUN=DelayedMatrixStats::colMedians)
     }
 }
 
