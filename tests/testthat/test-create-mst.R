@@ -135,6 +135,12 @@ test_that("MST construction works with endpoint specification", {
     out <- createClusterMST(y, endpoint="B", clusters=NULL)
     expect_true(igraph::degree(out, "B")==1L)
     expect_true(is.infinite(igraph::E(out)$gain[1]))
+    expect_identical(igraph::components(out)$no, 1L)
+
+    out <- createClusterMST(y, endpoint=c("C", "D"), clusters=NULL)
+    expect_true(igraph::are_adjacent(out, "B", "C")) 
+    expect_true(igraph::are_adjacent(out, "B", "D"))
+    expect_identical(igraph::components(out)$no, 1L)
 
     # Does sensible things when endpoints= doesn't have an effect.
     ref <- createClusterMST(y, clusters=NULL)
@@ -254,6 +260,7 @@ test_that("MST construction works with scaled distances", {
     mst3 <- createClusterMST(y0.simple, clusters=clusters.simple, dist.method="slingshot")
     expect_identical(ref[] > 0, mst3[] > 0)
     expect_identical(igraph::V(ref)$coordinates, igraph::V(mst3)$coordinates)
+    expect_identical(mst2[], mst3[]) # chooses scaled.full.
 
     # Trying something that requires a bit more... finesse.
     ref <- createClusterMST(y.complex, clusters=clusters.complex)
@@ -265,8 +272,9 @@ test_that("MST construction works with scaled distances", {
     mst <- createClusterMST(y.complex, clusters=clusters.complex, dist.method="scaled.full")
     expect_true(igraph::are_adjacent(mst, "1", "2"))
 
-    mst <- createClusterMST(y.complex, clusters=clusters.complex, dist.method="slingshot")
-    expect_true(igraph::are_adjacent(mst, "1", "2"))
+    mst2 <- createClusterMST(y.complex, clusters=clusters.complex, dist.method="slingshot")
+    expect_true(igraph::are_adjacent(mst2, "1", "2"))
+    expect_identical(mst2[], mst[]) # chooses scaled.full.
 
     # Works correctly with weight matrices.
     mat <- factor2matrix(clusters.complex)

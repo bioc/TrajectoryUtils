@@ -221,7 +221,7 @@ NULL
                 # Distances not really intepretable as Mahalanobis distances anymore.
                 warning("'use.median=TRUE' with 'dist.method=\"", dist.method, "\"' may yield unpredictable results")
             }
-            use.full <- (dist.method == "scaled.full" || (dist.method == "slingshot" && min(table(clusters)) <= ncol(x)))
+            use.full <- (dist.method == "scaled.full" || (dist.method == "slingshot" && min(table(clusters)) > ncol(x)))
             dmat <- .dist_clusters_scaled(x, clusters, centers=centers, full=use.full)
         }
     }
@@ -320,6 +320,7 @@ NULL
     (distances + t(distances))
 }
 
+#' @importFrom S4Vectors head
 .enforce_endpoints <- function(dmat, endpoints, allow.dyads=FALSE) {
     available <- dmat[unique(endpoints),,drop=FALSE]
     best.stats <- new.env()
@@ -335,25 +336,25 @@ NULL
             return(NULL)
         } else if (distance > best.stats$distance) {
             return(NULL)
-        } else {
-            current <- rownames(available)[i]
-            used <- which(path == current)
+        } 
+        
+        current <- rownames(available)[i]
+        self.used <- which(path == current)
 
-            if (length(used) > 1) {
-                # Can't have an endpoint connected to two things.
-                return(NULL)
-            } else if (length(used) == 1) { 
-                # Endpoint-to-endpoint dyads should be reciprocated,
-                # with no distance added.
-                reciprocal <- rownames(available)[used]
-                if (!reciprocal %in% path && allow.dyads) {
-                    SEARCH(c(path, reciprocal), distance)
-                }
-            } else {
-                allowed <- setdiff(colnames(available), c(current, path))
-                for (j in allowed) {
-                    SEARCH(c(path, j), distance + available[i,j])
-                }
+        if (length(self.used) == 1) { 
+            # Endpoint-to-endpoint dyads should be reciprocated,
+            # with no distance added (if they are allowed to exist).
+            reciprocal <- rownames(available)[self.used]
+            if (!reciprocal %in% path && allow.dyads) {
+                SEARCH(c(path, reciprocal), distance)
+            }
+        } else {
+            used.endpoints <- c(current, # currently in use.
+                head(rownames(available), length(path)), # endpoints connected from in previous steps.
+                intersect(path, rownames(available))) # endpoints connected to in previous steps.
+            allowed <- setdiff(colnames(available), used.endpoints)
+            for (j in allowed) {
+                SEARCH(c(path, j), distance + available[i,j])
             }
         }
     }
