@@ -69,7 +69,7 @@
 #' This is done by adding an extra row/column to the distance matrix corresponding to an artificial outgroup cluster,
 #' where the distance to all of the other real clusters is set to \eqn{\omega/2}.
 #' Large jumps in the MST between real clusters that are more distant than \eqn{\omega} will then be rerouted through the outgroup,
-#' allowing us to break up the MST into multiple subcomponents by removing the outgroup.
+#' allowing us to break up the MST into multiple subcomponents (i.e., a minimum spanning forest) by removing the outgroup.
 #'
 #' The default \eqn{\omega} value is computed by constructing the MST from the original distance matrix,
 #' computing the median edge length in that MST, and then scaling it by \code{outscale}.
@@ -78,10 +78,17 @@
 #' Alternatively, \code{outgroup} can be set to a numeric scalar in which case it is used directly as \eqn{\omega}.
 #'
 #' @section Forcing endpoints:
-#' If certain clusters are known to be endpoints (e.g., because they represent terminal states),
-#' the MST can be forced to treat them as such by setting \code{endpoints}.
+#' If certain clusters are known to be endpoints (e.g., because they represent terminal states), we can specify them in \code{endpoints}.
 #' This ensures that the returned graph will have such clusters as nodes of degree 1, i.e., they terminate the path.
-#' Note that these edges will have very high confidence values (see below) as they are forced to exist during graph construction.
+#' The function uses an exhaustive search to identify the MST with these constraints.
+#' If no configuration can be found, an error is raised - this will occur if all nodes are specified as endpoints, for example.
+#'
+#' If \code{outgroup=TRUE}, the function is allowed to connect two endpoints together to create a two-node subcomponent.
+#' This will result in the formation of a minimum spanning forest if there are more than two clusters in \code{x}.
+#' Of course, if there are only two nodes and both are specified as endpoints, a two-node subcomponent will be formed regardless of \code{outgroup}.
+#'
+#' Note that edges involving endpoint nodes will have infinite confidence values (see below).
+#' This reflects the fact that they are forced to exist during graph construction.
 #'
 #' @section Confidence on the edges:
 #' For the MST, we obtain a measure of the confidence in each edge by computing the distance gained if that edge were not present.
@@ -219,11 +226,17 @@ NULL
         }
     }
 
-    # Ensure all distances are positive, as zero weights = no edge. 
-    # We'll use the upper limit later on, hence the range().
-    limits <- range(dmat[dmat > 0])
-    dmat[] <- pmax(dmat, limits[1] / 1e6)
+    # Ensure all off-diagonal distances are positive, as zero weights = no edge. 
+    lower.limit <- min(dmat[dmat > 0])
+    dmat[] <- pmax(dmat, lower.limit[1] / 1e6)
     diag(dmat) <- 0
+
+    if (!is.null(endpoints)) {
+        # If outgroup=TRUE, then we can have multi-component graphs.
+        # If there are only two nodes, we don't really have much choice.
+        allow.dyads <- !isFALSE(outgroup) || nrow(dmat) == 2
+        dmat <- .enforce_endpoints(dmat, endpoints, allow.dyads=allow.dyads)
+    }
 
     if (!isFALSE(outgroup)) {
         if (!is.numeric(outgroup)) {
@@ -238,24 +251,6 @@ NULL
         dmat[length(dmat)] <- 0
         special.name <- strrep("x", max(nchar(old.d))+1L)
         rownames(dmat) <- colnames(dmat) <- c(old.d, special.name)
-    }
-
-    if (!is.null(endpoints)) {
-        # Forcing the MST to pass through the closest edge. We don't just
-        # delete the other edges because this would break the edge confidence
-        # estimation when there are no other routes to use to connect nodes. 
-        upper.limit <- limits[2] * 1e6
-        for (e in endpoints) {
-            others <- setdiff(rownames(dmat), e)
-            if (!isFALSE(outgroup)) {
-                others <- setdiff(others, special.name)
-            }
-
-            closest <- which.min(dmat[others,e])
-            others <- others[-closest]
-            dmat[others,e] <- upper.limit
-            dmat[e,others] <- upper.limit
-        }
     }
 
     g <- graph.adjacency(dmat, mode = "undirected", weighted = TRUE)
@@ -325,17 +320,76 @@ NULL
     (distances + t(distances))
 }
 
-#' @importFrom igraph minimum.spanning.tree E E<- ends get.edge.ids delete.edges
+.enforce_endpoints <- function(dmat, endpoints, allow.dyads=FALSE) {
+    available <- dmat[unique(endpoints),,drop=FALSE]
+    best.stats <- new.env()
+    best.stats$distance <- Inf
+
+    SEARCH <- function(path=character(0), distance=0) {
+        i <- length(path) + 1L
+        if (i > nrow(available)) {
+            if (distance < best.stats$distance) {
+                best.stats$distance <- distance
+                best.stats$path <- path
+            }
+            return(NULL)
+        } else if (distance > best.stats$distance) {
+            return(NULL)
+        } else {
+            current <- rownames(available)[i]
+            used <- which(path == current)
+
+            if (length(used) > 1) {
+                # Can't have an endpoint connected to two things.
+                return(NULL)
+            } else if (length(used) == 1) { 
+                # Endpoint-to-endpoint dyads should be reciprocated,
+                # with no distance added.
+                reciprocal <- rownames(available)[used]
+                if (!reciprocal %in% path && allow.dyads) {
+                    SEARCH(c(path, reciprocal), distance)
+                }
+            } else {
+                allowed <- setdiff(colnames(available), c(current, path))
+                for (j in allowed) {
+                    SEARCH(c(path, j), distance + available[i,j])
+                }
+            }
+        }
+    }
+
+    SEARCH()
+    if (is.infinite(best.stats$distance)) {
+        stop("no solvable tree for specified 'endpoints'")
+    }
+
+    for (a in seq_len(nrow(available))) {
+        current <- rownames(available)[a]
+        others <- setdiff(colnames(dmat), best.stats$path[a])
+        dmat[current,others] <- 0
+        dmat[others,current] <- 0
+    }
+
+    dmat
+}
+
+#' @importFrom igraph minimum.spanning.tree E E<- ends get.edge.ids delete.edges V
 .estimate_edge_confidence <- function(mst, g) {
     edges <- E(mst)
     ends <- ends(mst, edges)
     reweight <- numeric(length(edges))
+    to.skip <- names(V(g))[degree(g) <= 1]
 
     for (i in seq_along(edges)) {
-        id <- get.edge.ids(g, ends[i,])        
-        g.copy <- delete.edges(g, id)
-        mst.copy <- minimum.spanning.tree(g.copy)
-        reweight[i] <- sum(E(mst.copy)$weight)
+        cur.ends <- ends[i,]
+        if (any(cur.ends %in% to.skip)) {
+            reweight[i] <- Inf
+        } else {
+            id <- get.edge.ids(g, cur.ends)
+            g.copy <- delete.edges(g, id)
+            mst.copy <- minimum.spanning.tree(g.copy)
+            reweight[i] <- sum(E(mst.copy)$weight)
+        }
     }
 
     W <- edges$weight

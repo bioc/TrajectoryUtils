@@ -126,7 +126,7 @@ If \code{outgroup=TRUE}, we add an outgroup to avoid constructing a trajectory b
 This is done by adding an extra row/column to the distance matrix corresponding to an artificial outgroup cluster,
 where the distance to all of the other real clusters is set to \eqn{\omega/2}.
 Large jumps in the MST between real clusters that are more distant than \eqn{\omega} will then be rerouted through the outgroup,
-allowing us to break up the MST into multiple subcomponents by removing the outgroup.
+allowing us to break up the MST into multiple subcomponents (i.e., a minimum spanning forest) by removing the outgroup.
 
 The default \eqn{\omega} value is computed by constructing the MST from the original distance matrix,
 computing the median edge length in that MST, and then scaling it by \code{outscale}.
@@ -137,10 +137,17 @@ Alternatively, \code{outgroup} can be set to a numeric scalar in which case it i
 
 \section{Forcing endpoints}{
 
-If certain clusters are known to be endpoints (e.g., because they represent terminal states),
-the MST can be forced to treat them as such by setting \code{endpoints}.
+If certain clusters are known to be endpoints (e.g., because they represent terminal states), we can specify them in \code{endpoints}.
 This ensures that the returned graph will have such clusters as nodes of degree 1, i.e., they terminate the path.
-Note that these edges will have very high confidence values (see below) as they are forced to exist during graph construction.
+The function uses an exhaustive search to identify the MST with these constraints.
+If no configuration can be found, an error is raised - this will occur if all nodes are specified as endpoints, for example.
+
+If \code{outgroup=TRUE}, the function is allowed to connect two endpoints together to create a two-node subcomponent.
+This will result in the formation of a minimum spanning forest if there are more than two clusters in \code{x}.
+Of course, if there are only two nodes and both are specified as endpoints, a two-node subcomponent will be formed regardless of \code{outgroup}.
+
+Note that edges involving endpoint nodes will have infinite confidence values (see below).
+This reflects the fact that they are forced to exist during graph construction.
 }
 
 \section{Confidence on the edges}{
