@@ -322,7 +322,7 @@ NULL
 
 #' @importFrom S4Vectors head
 .enforce_endpoints <- function(dmat, endpoints, allow.dyads=FALSE) {
-    available <- dmat[unique(endpoints),,drop=FALSE]
+    available <- dmat[as.character(unique(endpoints)),,drop=FALSE]
     best.stats <- new.env()
     best.stats$distance <- Inf
 
