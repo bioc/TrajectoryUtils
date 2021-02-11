@@ -1,6 +1,6 @@
 Package: TrajectoryUtils
-Version: 0.99.0
-Date: 2020-12-11
+Version: 0.99.1
+Date: 2021-02-11
 Title: Single-Cell Trajectory Analysis Utilities
 Description: 
     Implements low-level utilities for single-cell trajectory analysis,
@@ -34,3 +34,5 @@ Suggests:
     rmarkdown
 VignetteBuilder: knitr
 RoxygenNote: 7.1.1
+BugReports: https://github.com/LTLA/TrajectoryUtils/issues
+URL: https://bioconductor.org/packages/TrajectoryUtils
