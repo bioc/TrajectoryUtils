@@ -37,8 +37,8 @@
 #' If \code{NULL}, all provided columns are used by default. 
 #' @param outgroup A logical scalar indicating whether an outgroup should be inserted to split unrelated trajectories.
 #' Alternatively, a numeric scalar specifying the distance threshold to use for this splitting.
-#' @param outscale A numeric scalar specifying the scaling to apply to the median distance between centroids
-#' to define the threshold for outgroup splitting.
+#' @param outscale A numeric scalar specifying the scaling of the median distance between centroids,
+#' used to define the threshold for outgroup splitting.
 #' Only used if \code{outgroup=TRUE}.
 #' @param endpoints A character vector of clusters that must be endpoints, i.e., nodes of degree 1 or lower in the MST.
 #' @param assay.type An integer or string specifying the assay to use from a SummarizedExperiment \code{x}.
@@ -75,6 +75,8 @@
 #' computing the median edge length in that MST, and then scaling it by \code{outscale}.
 #' This adapts to the magnitude of the distances and the internal structure of the dataset
 #' while also providing some margin for variation across cluster pairs.
+#' The default \code{outscale=1.5} will break any branch that is 50\% longer than the median length. 
+#'
 #' Alternatively, \code{outgroup} can be set to a numeric scalar in which case it is used directly as \eqn{\omega}.
 #'
 #' @section Forcing endpoints:
@@ -183,7 +185,7 @@ NULL
 
 #' @importFrom igraph graph.adjacency minimum.spanning.tree delete_vertices E V V<-
 #' @importFrom stats median dist
-.create_cluster_mst <- function(x, clusters, use.median=FALSE, outgroup=FALSE, outscale=3, endpoints=NULL, columns=NULL,
+.create_cluster_mst <- function(x, clusters, use.median=FALSE, outgroup=FALSE, outscale=1.5, endpoints=NULL, columns=NULL,
     dist.method = c("simple", "scaled.full", "scaled.diag", "slingshot", "mnn"), 
     with.mnn=FALSE, mnn.k=50, BNPARAM=NULL, BPPARAM=NULL) 
 {

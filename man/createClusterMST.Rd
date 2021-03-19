@@ -14,7 +14,7 @@ createClusterMST(x, ...)
   clusters,
   use.median = FALSE,
   outgroup = FALSE,
-  outscale = 3,
+  outscale = 1.5,
   endpoints = NULL,
   columns = NULL,
   dist.method = c("simple", "scaled.full", "scaled.diag", "slingshot", "mnn"),
@@ -70,8 +70,8 @@ All weights should be positive and sum to 1 for each row.}
 \item{outgroup}{A logical scalar indicating whether an outgroup should be inserted to split unrelated trajectories.
 Alternatively, a numeric scalar specifying the distance threshold to use for this splitting.}
 
-\item{outscale}{A numeric scalar specifying the scaling to apply to the median distance between centroids
-to define the threshold for outgroup splitting.
+\item{outscale}{A numeric scalar specifying the scaling of the median distance between centroids,
+used to define the threshold for outgroup splitting.
 Only used if \code{outgroup=TRUE}.}
 
 \item{endpoints}{A character vector of clusters that must be endpoints, i.e., nodes of degree 1 or lower in the MST.}
@@ -132,6 +132,8 @@ The default \eqn{\omega} value is computed by constructing the MST from the orig
 computing the median edge length in that MST, and then scaling it by \code{outscale}.
 This adapts to the magnitude of the distances and the internal structure of the dataset
 while also providing some margin for variation across cluster pairs.
+The default \code{outscale=1.5} will break any branch that is 50\% longer than the median length. 
+
 Alternatively, \code{outgroup} can be set to a numeric scalar in which case it is used directly as \eqn{\omega}.
 }
 
