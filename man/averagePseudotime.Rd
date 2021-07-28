@@ -28,7 +28,9 @@ Conversely, for cells that are unique to a single path, the average collapses to
 }
 \examples{
 pseudotimes <- matrix(rnorm(200), ncol=2)
-pseudotimes[sample(length(pseudotimes), 1:50)] <- NA
+pseudotimes[sample(length(pseudotimes), 1:40),1] <- NA
+pseudotimes[sample(length(pseudotimes), 61:100),2] <- NA
+pseudotimes[sample(length(pseudotimes), 41:60),] <- runif(20)
 averagePseudotime(pseudotimes)
 
 pto <- PseudotimeOrdering(pseudotimes)
