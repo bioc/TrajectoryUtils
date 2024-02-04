@@ -105,7 +105,7 @@ test_that("MST construction works as expected with outgroup specification", {
     # Default effects.
     y <- rbind(A=c(0, 1), B=c(0, 2), C=c(10, 3), D=c(10, 4))
     mst <- createClusterMST(y, outgroup=TRUE, cluster=NULL)
-    expect_identical(igraph::components(mst)$no, 2L)
+    expect_equal(igraph::components(mst)$no, 2L)
     expect_false(igraph::are_adjacent(mst, "B", "C"))
 
     y <- rbind(A=c(0, 1), B=c(0, 2), C=c(0, 3), D=c(10, 4), E=c(0,4)) 
@@ -116,11 +116,11 @@ test_that("MST construction works as expected with outgroup specification", {
     # Automated outgroup calculation is done correctly.
     y <- rbind(A=c(0, 1), B=c(0, 2), C=c(0, 4), D=c(0, 10.001))
     out <- createClusterMST(y, clusters=NULL, outgroup=TRUE, outscale=3)
-    expect_identical(igraph::components(out)$no, 2L)
+    expect_equal(igraph::components(out)$no, 2L)
 
     y[length(y)] <- 9.999
     out <- createClusterMST(y, clusters=NULL, outgroup=TRUE, outscale=3)
-    expect_identical(igraph::components(out)$no, 1L)
+    expect_equal(igraph::components(out)$no, 1L)
 
     # Gain calculations are *mostly* unaffected. Kind of depends
     # on whether the rerouted path passes through the outgroup.
@@ -135,12 +135,12 @@ test_that("MST construction works with endpoint specification", {
     out <- createClusterMST(y, endpoint="B", clusters=NULL)
     expect_true(igraph::degree(out, "B")==1L)
     expect_true(is.infinite(igraph::E(out)$gain[1]))
-    expect_identical(igraph::components(out)$no, 1L)
+    expect_equal(igraph::components(out)$no, 1L)
 
     out <- createClusterMST(y, endpoint=c("C", "D"), clusters=NULL)
     expect_true(igraph::are_adjacent(out, "B", "C")) 
     expect_true(igraph::are_adjacent(out, "B", "D"))
-    expect_identical(igraph::components(out)$no, 1L)
+    expect_equal(igraph::components(out)$no, 1L)
 
     # Does sensible things when endpoints= doesn't have an effect.
     ref <- createClusterMST(y, clusters=NULL)
@@ -155,7 +155,7 @@ test_that("MST construction works with endpoint specification", {
     out <- createClusterMST(y, endpoint=rownames(y), outgroup=TRUE, clusters=NULL)
     expect_true(igraph::are_adjacent(out, "A", "B")) # forms dyads.
     expect_true(igraph::are_adjacent(out, "C", "D"))
-    expect_identical(igraph::components(out)$no, 2L)
+    expect_equal(igraph::components(out)$no, 2L)
 
     expect_error(createClusterMST(y[1:3,], endpoint=rownames(y)[1:3], clusters=NULL), "no solvable")
     expect_error(createClusterMST(y[1:3,], endpoint=rownames(y)[1:3], outgroup=TRUE, clusters=NULL), "no solvable")
@@ -164,12 +164,12 @@ test_that("MST construction works with endpoint specification", {
     y <- rbind(A=c(0, 1), B=c(0, 1.5), C=c(0, 3.5), D=c(0, 4)) 
     ref <- createClusterMST(y, endpoint=c("B", "C"), clusters=NULL)
     expect_true(igraph::are_adjacent(ref, "A", "D"))
-    expect_identical(igraph::components(ref)$no, 1L)
+    expect_equal(igraph::components(ref)$no, 1L)
 
     out <- createClusterMST(y, endpoint=c("B", "C"), outgroup=TRUE, clusters=NULL)
     expect_true(igraph::are_adjacent(out, "A", "B"))
     expect_true(igraph::are_adjacent(out, "C", "D"))
-    expect_identical(igraph::components(out)$no, 2L)
+    expect_equal(igraph::components(out)$no, 2L)
 
     # Behaves correctly with outgroup=. This example is carefully designed
     # with a spacing of C and D such that it only JUST causes outgroup formation,

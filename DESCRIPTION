@@ -1,6 +1,6 @@
 Package: TrajectoryUtils
-Version: 1.10.0
-Date: 2021-07-29
+Version: 1.10.1
+Date: 2024-02-03
 Title: Single-Cell Trajectory Analysis Utilities
 Description: 
     Implements low-level utilities for single-cell trajectory analysis,
